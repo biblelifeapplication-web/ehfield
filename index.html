@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -93,52 +93,15 @@
   }
   .sync-dot.offline{ background:var(--gold); }
 
-  .book-bar{
-    display:flex; align-items:center; gap:10px;
-    margin-top:18px;
-  }
-  .book-bar-label{
-    font-size:11px; text-transform:uppercase; letter-spacing:0.09em;
-    color:var(--ink-soft);
-  }
-  .book-bar select{
-    font-family:'IBM Plex Sans', sans-serif;
-    font-size:13.5px; font-weight:500; color:var(--ink);
-    background:var(--gold-soft); border:1px solid var(--gold-soft);
-    border-radius:999px; padding:6px 14px; cursor:pointer;
-  }
-
   header.controls{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    margin:28px 0 24px;
+    margin:24px 0 24px;
     flex-wrap:wrap;
     gap:14px;
     border-bottom:1px solid var(--line);
     padding-bottom:20px;
-  }
-  .month-nav{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    font-family:'Fraunces', serif;
-    font-size:20px;
-  }
-  .month-nav button{
-    background:none;
-    border:1px solid var(--line-strong);
-    border-radius:50%;
-    width:28px;height:28px;
-    display:flex;align-items:center;justify-content:center;
-    color:var(--ink-soft);
-    font-size:14px;
-    transition:background .15s ease;
-  }
-  .month-nav button:hover{ background:var(--paper-raised); }
-  .month-nav select{
-    border:none;background:none;font-family:'Fraunces', serif;font-size:20px;color:var(--ink);
-    appearance:none;cursor:pointer;text-align:center;
   }
 
   .btn-add{
@@ -280,7 +243,7 @@
   .ledger-date{
     font-family:'IBM Plex Sans', sans-serif;
     font-size:11px; color:var(--ink-faint);
-    width:76px; flex:none; padding-top:2px;
+    width:80px; flex:none; padding-top:2px;
   }
   .ledger-main{ flex:1; min-width:0; }
   .ledger-desc-row{
@@ -302,13 +265,21 @@
     font-size:9.5px; text-transform:uppercase; letter-spacing:0.05em;
     color:var(--gold); border:1px solid var(--gold-soft); padding:1px 5px; border-radius:999px;
   }
+  .ledger-amounts{
+    display:flex; flex-direction:column; align-items:flex-end;
+    flex:none; width:130px;
+  }
   .ledger-amt{
     font-family:'IBM Plex Mono', monospace;
-    font-size:14.5px; font-weight:500;
-    flex:none; width:96px; text-align:right;
+    font-size:14.5px; font-weight:500; text-align:right;
   }
   .ledger-amt.income{ color:var(--income); }
   .ledger-amt.expense{ color:var(--expense); }
+  .ledger-bal{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px; color:var(--ink-soft); margin-top:2px; text-align:right;
+  }
+  .ledger-bal.negative{ color:var(--expense); }
   .ledger-actions{
     display:flex; align-items:center; gap:2px; flex:none;
     opacity:0; transition:opacity .12s ease;
@@ -330,12 +301,12 @@
   .toolbar{
     display:flex; gap:8px; align-items:center;
   }
-  .toolbar button{
+  .toolbar button, .btn-secondary{
     background:none; border:1px solid var(--line-strong); color:var(--ink-soft);
     border-radius:999px; padding:6px 13px; font-size:12px;
     display:flex; align-items:center; gap:6px;
   }
-  .toolbar button:hover{ background:var(--paper); color:var(--ink); }
+  .toolbar button:hover, .btn-secondary:hover{ background:var(--paper); color:var(--ink); }
 
   /* ---------- Modal ---------- */
   .overlay{
@@ -402,9 +373,6 @@
   .modal-actions{
     display:flex; justify-content:flex-end; gap:10px; margin-top:22px;
   }
-  .btn-secondary{
-    background:none; border:1px solid var(--line-strong); padding:9px 16px; border-radius:999px; font-size:13px; color:var(--ink-soft);
-  }
   .btn-primary{
     background:var(--ink); color:var(--paper-raised); border:none; padding:9px 20px; border-radius:999px; font-size:13px; font-weight:500;
   }
@@ -427,11 +395,7 @@
     .brand .mark{ font-size:24px; }
     .sync-note{ max-width:100%; text-align:left; }
 
-    header.controls{ flex-direction:column; align-items:stretch; gap:12px; }
-    header.controls > div[style*="flex"]{ justify-content:stretch; }
-    header.controls > div[style*="flex"] .btn-add{ flex:1 !important; }
-    .month-nav{ justify-content:space-between; }
-    .month-nav select{ flex:1; }
+    header.controls{ flex-direction:row; align-items:center; justify-content:space-between; gap:12px; }
     .btn-add{ justify-content:center; }
 
     .card{ padding:14px 16px; }
@@ -446,7 +410,8 @@
       white-space:normal; overflow:visible; text-overflow:clip;
       overflow-wrap:anywhere; line-height:1.4;
     }
-    .ledger-amt{ order:2; width:auto; margin-left:auto; }
+    .ledger-amounts{ order:2; margin-left:auto; width:auto; align-items:flex-end; }
+    .ledger-amt{ width:auto; }
     .ledger-actions{ order:4; opacity:1; margin-left:auto; }
     .ledger-leader{ display:none; }
 
@@ -465,7 +430,6 @@
 
     .toolbar button{ padding:7px 12px; }
 
-    /* keep inputs at 16px+ so iOS Safari doesn't zoom in on focus */
     .field input, .field select{ font-size:16px; }
   }
 </style>
@@ -485,9 +449,6 @@
   </header>
 
   <script>
-    // Runs first, independent of the main script below — if anything in the
-    // app's code throws or fails to parse, show it here instead of leaving
-    // "Checking sync status…" stuck with no explanation.
     window.addEventListener("error", function(e){
       var dot = document.getElementById("syncDot");
       var text = document.getElementById("syncText");
@@ -498,29 +459,27 @@
   </script>
 
   <header class="controls">
-    <div class="month-nav">
-      <button id="prevMonth" aria-label="ယခင်လ">‹</button>
-      <select id="monthSelect"></select>
-      <button id="nextMonth" aria-label="နောက်လ">›</button>
+    <div>
+      <h2 style="margin:0; font-size:18px; font-weight:500; font-family:'Fraunces', serif;">စာရင်းချုပ် အနှစ်ချုပ်</h2>
     </div>
-    <div style="display:flex; gap:8px; flex:1; justify-content:flex-end;">
-      <button class="btn-secondary" id="openSettings" title="Category များ စီမံရန်" style="border-radius:999px; padding:10px 14px; flex:none;">⚙</button>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button class="btn-secondary" id="openSettings" title="Category များ စီမံရန်" style="border-radius:999px; padding:10px 14px; flex:none;">⚙ Category များ</button>
       <button class="btn-add" id="openAdd" style="flex:none;">＋ စာရင်းအသစ်ထည့်ရန်</button>
     </div>
   </header>
 
   <section class="summary">
-    <div class="card income"><div class="accent-bar"></div><div class="label">ဒီလ ဝင်ငွေ</div><div class="value" id="sumIncome">$0.00</div></div>
-    <div class="card expense"><div class="accent-bar"></div><div class="label">ဒီလ အသုံးစရိတ်</div><div class="value" id="sumExpense">$0.00</div></div>
+    <div class="card income"><div class="accent-bar"></div><div class="label">စုစုပေါင်း ဝင်ငွေ</div><div class="value" id="sumIncome">$0.00</div></div>
+    <div class="card expense"><div class="accent-bar"></div><div class="label">စုစုပေါင်း အသုံးစရိတ်</div><div class="value" id="sumExpense">$0.00</div></div>
     <div class="card balance"><div class="accent-bar"></div><div class="label">လက်ကျန်ငွေ</div><div class="value" id="sumBalance">$0.00</div></div>
   </section>
 
   <section class="main-grid">
     <div class="panel">
       <h2>Category အလိုက်</h2>
-      <div class="sub">ရွေးထားတဲ့လရဲ့ အသုံးစရိတ်များ</div>
+      <div class="sub">စုစုပေါင်း အသုံးစရိတ်များ</div>
       <div class="chart-wrap"><canvas id="catChart"></canvas></div>
-      <div id="chartEmpty" class="empty-chart" style="display:none;">ဒီလအတွက် အသုံးစရိတ် မထည့်ရသေးပါ။</div>
+      <div id="chartEmpty" class="empty-chart" style="display:none;">အသုံးစရိတ် စာရင်း မထည့်ရသေးပါ။</div>
       <div class="legend" id="legend"></div>
 
       <div class="recurring-list">
@@ -537,9 +496,9 @@
           <button id="exportCsv">⇩ CSV ထုတ်ယူရန်</button>
         </div>
       </div>
-      <div class="sub" id="ledgerSub">ရွေးထားတဲ့လရဲ့ စာရင်းအားလုံး</div>
+      <div class="sub" id="ledgerSub">စာရင်းများ အားလုံး</div>
       <ul class="ledger-list" id="ledgerList"></ul>
-      <div class="empty-ledger" id="ledgerEmpty" style="display:none;">ဒီလအတွက် စာရင်းမရှိသေးပါ။ အပေါ်က ခလုတ်ကနေ ပထမဆုံး စာရင်းထည့်ပါ။</div>
+      <div class="empty-ledger" id="ledgerEmpty" style="display:none;">စာရင်း မရှိသေးပါ။ အပေါ်က ခလုတ်ကနေ ပထမဆုံး စာရင်းထည့်ပါ။</div>
     </div>
   </section>
 </div>
@@ -615,22 +574,6 @@
 (function(){
   "use strict";
 
-  // Categories are now editable (Settings). Each "book" (account) has its
-  // own category set, transactions, and recurring templates.
-  const DEFAULT_CATEGORIES_HOUSEHOLD = [
-    { id:"inc1", type:"income", name:"Salary", color:"#3F6B52" },
-    { id:"inc2", type:"income", name:"Freelance", color:"#5B7C99" },
-    { id:"inc3", type:"income", name:"Other Income", color:"#8A8F80" },
-    { id:"exp1", type:"expense", name:"ဖုန်းဖိုး", color:"#5B7C99" },
-    { id:"exp2", type:"expense", name:"မီတာခ", color:"#A9832E" },
-    { id:"exp3", type:"expense", name:"ရေဖိုး", color:"#4F9C93" },
-    { id:"exp4", type:"expense", name:"အစားအသောက်", color:"#3F6B52" },
-    { id:"exp5", type:"expense", name:"ကလေးအသုံးစရိတ်", color:"#B15E7C" },
-    { id:"exp6", type:"expense", name:"မိသားစုအသုံးစရိတ်", color:"#7C5BA6" },
-    { id:"exp7", type:"expense", name:"အင်တာနက်ဘီလ်", color:"#6B8CAE" },
-    { id:"exp8", type:"expense", name:"ကျန်းမာရေး", color:"#8C3D25" },
-    { id:"exp9", type:"expense", name:"အထွေထွေ", color:"#8A8F80" }
-  ];
   const DEFAULT_CATEGORIES_FARMING = [
     { id:"finc1", type:"income", name:"ဆန်/စပါး ရောင်းရငွေ", color:"#3F6B52" },
     { id:"finc2", type:"income", name:"အခြားဝင်ငွေ", color:"#8A8F80" },
@@ -642,25 +585,11 @@
     { id:"fexp6", type:"expense", name:"မြေငှားခ", color:"#B15E7C" },
     { id:"fexp7", type:"expense", name:"အခြား", color:"#8A8F80" }
   ];
-  const GENERIC_DEFAULT_CATEGORIES = [
-    { id:"ginc1", type:"income", name:"ဝင်ငွေ", color:"#3F6B52" },
-    { id:"gexp1", type:"expense", name:"အထွေထွေ", color:"#8A8F80" }
-  ];
-  function defaultCategoriesForBook(bookId){
-    if(bookId === "household") return DEFAULT_CATEGORIES_HOUSEHOLD;
-    if(bookId === "farming") return DEFAULT_CATEGORIES_FARMING;
-    return GENERIC_DEFAULT_CATEGORIES;
-  }
 
-  // This file is intentionally single-book and isolated: it always points at
-  // its own dedicated Google Sheet (see CONFIG.SHEETS_URL below), so there is
-  // no book switcher and no way to reach any other spreadsheet/account from
-  // here — sheet names stay unprefixed since this Sheet only ever holds
-  // farming data.
   const currentBook = "farming";
   function sheetType(base){ return base; }
 
-  let categoryList = []; // [{id, type, name, color}]
+  let categoryList = []; 
   let CATEGORIES = { income: [], expense: [] };
   let CAT_COLORS = {};
 
@@ -677,7 +606,7 @@
     const sheetName = sheetType("categories");
     const rows = await loadData("categories", sheetName, null);
     if(!rows || rows.length === 0){
-      categoryList = defaultCategoriesForBook(currentBook).map(c => ({ ...c }));
+      categoryList = DEFAULT_CATEGORIES_FARMING.map(c => ({ ...c }));
       await saveData("categories", sheetName, categoryList);
     } else {
       categoryList = rows;
@@ -686,10 +615,8 @@
   }
 
   // ---------- Google Sheets config ----------
-  // Paste your deployed Apps Script "Web app URL" between the quotes below.
-  // See google-sheets-code.gs for the backend script and setup steps.
   const CONFIG = {
-    SHEETS_URL: "https://script.google.com/macros/s/AKfycbyvJOTkZJGKYITJzUvekBM3_9jqMi-Zf-cyxp7fpZt-NQPYj1NWrX_BA1bc6GbHgfSe/exec"
+    SHEETS_URL: "https://script.google.com/macros/s/AKfycbyrwTjws9gAnH7pYT5xm5FEFLNw8Hz8QL62eLA2T-OYG1f-Nh-tyeK27j5VVpEjSr8H/exec"
   };
   const isConfigured = () => !!CONFIG.SHEETS_URL;
 
@@ -700,7 +627,7 @@
     books: ["id","name"]
   };
 
-  let memoryStore = {}; // sheetName -> array, used when no Sheets URL is configured
+  let memoryStore = {};
 
   async function loadData(kind, sheetName, fallback){
     if(!isConfigured()){
@@ -715,7 +642,8 @@
 
   function normalizeRow(kind, r){
     if(kind === "transactions"){
-      const amount = parseFloat(r.amount) || 0;
+      const amountStr = String(r.amount || "0").replace(/,/g, "");
+      const amount = parseFloat(amountStr) || 0;
       return {
         id: String(r.id), type: String(r.type||"").trim().toLowerCase(), amount, category: r.category,
         description: r.description || "", date: String(r.date).slice(0,10),
@@ -723,9 +651,8 @@
       };
     }
     if(kind === "recurring"){
-      const amount = parseFloat(r.amount) || 0;
-      // Treat "active" as true unless explicitly marked false — this matters
-      // because a row typed directly into the sheet often leaves this blank.
+      const amountStr = String(r.amount || "0").replace(/,/g, "");
+      const amount = parseFloat(amountStr) || 0;
       const activeRaw = r.active;
       const active = !(activeRaw === false || activeRaw === 0 ||
         ["false","no","0"].includes(String(activeRaw).trim().toLowerCase()));
@@ -762,28 +689,17 @@
       const headers = HEADERS[kind];
       const res = await fetch(CONFIG.SHEETS_URL, {
         method: "POST",
-        // text/plain avoids a CORS preflight that Apps Script doesn't handle;
-        // the backend still JSON.parses the body regardless of this header.
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ type: sheetName, headers, rows: value })
       });
-      if(!res.ok){
-        console.error("Save failed:", sheetName, "HTTP", res.status, await res.text().catch(()=>""));
-        return false;
-      }
+      if(!res.ok) return false;
       const result = await res.json().catch(() => null);
-      if(!result || result.success !== true){
-        console.error("Save did not confirm success:", sheetName, result);
-        return false;
-      }
-      return true;
+      return result && result.success === true;
     }catch(e){
-      console.error("Save threw an error:", sheetName, e);
       return false;
     }
   }
 
-  // Convenience wrappers that route to the correct sheet for the active book.
   async function loadTx(){ return await loadData("transactions", sheetType("transactions"), []); }
   async function saveTx(){ return await saveData("transactions", sheetType("transactions"), transactions); }
   async function loadRec(){ return await loadData("recurring", sheetType("recurring"), []); }
@@ -793,7 +709,6 @@
   let recurring = [];
   let currentType = "expense";
   let chart = null;
-  let viewMonth; // "YYYY-MM"
 
   const $ = (id) => document.getElementById(id);
   const fmt = (n) => (n<0?"-":"") + "$" + Math.abs(n).toFixed(2);
@@ -820,14 +735,13 @@
     try{
       const res = await fetch(`${CONFIG.SHEETS_URL}?type=transactions`);
       if(!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json(); // throws if the response isn't JSON (e.g. a login page)
+      const data = await res.json();
       if(!Array.isArray(data)) throw new Error("Unexpected response shape");
       dot.classList.remove("offline");
-      text.textContent = "Google Sheets နဲ့ ချိတ်ဆက်ပြီးပါပြီ — ဒီစာရင်းသုံးသူအားလုံး မြင်နိုင်ပါတယ်";
+      text.textContent = "Google Sheets နဲ့ ချိတ်ဆက်ပြီးပါပြီ";
     }catch(e){
       dot.classList.add("offline");
-      text.textContent = "Google Sheet ချိတ်ဆက်မှု မအောင်မြင်ပါ — Apps Script access ကို 'Anyone' ဖြစ်အောင် စစ်ပါ";
-      console.error("Sync check failed:", e);
+      text.textContent = "Google Sheet ချိတ်ဆက်မှု မအောင်မြင်ပါ";
     }
   }
 
@@ -845,7 +759,7 @@
     let changed = false;
     recurring.forEach(r => {
       if(!r.active) return;
-      if(!r.nextDate || !/^\d{4}-\d{2}-\d{2}$/.test(r.nextDate)) return; // skip rows with no usable date
+      if(!r.nextDate || !/^\d{4}-\d{2}-\d{2}$/.test(r.nextDate)) return;
       let guard = 0;
       while(r.nextDate <= today && guard < 500){
         transactions.push({
@@ -860,63 +774,7 @@
     return changed;
   }
 
-  // ---------- Month handling ----------
-  const MY_MONTHS = ["ဇန်နဝါရီ","ဖေဖော်ဝါရီ","မတ်","ဧပြီ","မေ","ဇွန်","ဇူလိုင်","သြဂုတ်","စက်တင်ဘာ","အောက်တိုဘာ","နိုဝင်ဘာ","ဒီဇင်ဘာ"];
-  const MY_MONTHS_SHORT = ["ဇန်","ဖေ","မတ်","ဧပြီ","မေ","ဇွန်","ဇူလိုင်","သြဂုတ်","စက်","အောက်","နို","ဒီ"];
-  function monthLabel(ym){
-    const [y,m] = ym.split("-").map(Number);
-    return `${MY_MONTHS[m-1]} ${y}`;
-  }
-
-  function populateMonthSelect(){
-    const set = new Set(transactions.map(t => t.date.slice(0,7)));
-    set.add(todayISO().slice(0,7));
-    set.add(viewMonth);
-    const months = Array.from(set).sort();
-    const sel = $("monthSelect");
-    sel.innerHTML = "";
-    months.forEach(m => {
-      const opt = document.createElement("option");
-      opt.value = m; opt.textContent = monthLabel(m);
-      if(m === viewMonth) opt.selected = true;
-      sel.appendChild(opt);
-    });
-  }
-
-  function shiftMonth(delta){
-    const [y,m] = viewMonth.split("-").map(Number);
-    const d = new Date(y, m-1+delta, 1);
-    viewMonth = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
-    populateMonthSelect();
-    render();
-  }
-
   // ---------- Rendering ----------
-  function monthTx(){
-    return transactions.filter(t => t.date.slice(0,7) === viewMonth)
-      .sort((a,b) => b.date.localeCompare(a.date));
-  }
-
-  // Running (cumulative) balance across ALL transactions ever entered,
-  // in true chronological order — like a bank statement's balance column.
-  // Same-day entries keep their original entry order as the tie-break.
-  function computeBalances(){
-    const withIndex = transactions.map((t, i) => ({ t, i }));
-    withIndex.sort((a, b) => a.t.date.localeCompare(b.t.date) || a.i - b.i);
-    let bal = 0;
-    const map = {};
-    withIndex.forEach(({ t }) => {
-      bal += t.type === "income" ? t.amount : -t.amount;
-      map[t.id] = bal;
-    });
-    return map;
-  }
-
-  function fmtNum(n){
-    const r = Math.round(n);
-    return (r < 0 ? "-" : "") + Math.abs(r).toLocaleString();
-  }
-
   function renderSummary(list){
     let inc = 0, exp = 0;
     list.forEach(t => t.type === "income" ? inc += t.amount : exp += t.amount);
@@ -996,7 +854,7 @@
     const ul = $("ledgerList");
     const emptyEl = $("ledgerEmpty");
     ul.innerHTML = "";
-    $("ledgerSub").textContent = list.length + " ခု" + " · " + monthLabel(viewMonth);
+    $("ledgerSub").textContent = "စုစုပေါင်း " + list.length + " ခု";
 
     if(list.length === 0){
       emptyEl.style.display = "block";
@@ -1004,13 +862,25 @@
     }
     emptyEl.style.display = "none";
 
-    list.forEach(t => {
+    // 1. ရက်စွဲအလိုက် လက်ကျန်ငွေ (Running Balance) တွက်ချက်ခြင်း
+    const chrono = list.slice().sort((a,b) => a.date.localeCompare(b.date));
+    let currentBal = 0;
+    const balMap = new Map();
+    chrono.forEach(t => {
+      if(t.type === "income") currentBal += t.amount;
+      else currentBal -= t.amount;
+      balMap.set(t.id, currentBal);
+    });
+
+    // 2. နောက်ဆုံးထည့်ထားသော စာရင်းကို အပေါ်တွင် ပြသခြင်း
+    const sorted = list.slice().sort((a,b) => b.date.localeCompare(a.date));
+
+    sorted.forEach(t => {
+      const runBal = balMap.get(t.id) || 0;
       const li = document.createElement("li");
       li.className = "ledger-row";
-      const dObj = new Date(t.date + "T00:00:00");
-      const dateShort = `${MY_MONTHS_SHORT[dObj.getMonth()]} ${dObj.getDate()}`;
       li.innerHTML = `
-        <div class="ledger-date">${dateShort}</div>
+        <div class="ledger-date">${t.date}</div>
         <div class="ledger-main">
           <div class="ledger-desc-row">
             <span class="ledger-desc">${t.description || t.category}</span>
@@ -1021,7 +891,10 @@
             ${t.category}${t.recurringId ? '<span class="recur-badge">ပုံမှန်ထပ်ဖြစ်</span>' : ''}
           </div>
         </div>
-        <div class="ledger-amt ${t.type}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</div>
+        <div class="ledger-amounts">
+          <div class="ledger-amt ${t.type}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</div>
+          <div class="ledger-bal ${runBal < 0 ? 'negative' : ''}" title="လက်ကျန်ငွေ">လက်ကျန်: ${fmt(runBal)}</div>
+        </div>
         <div class="ledger-actions">
           <button class="ledger-edit" title="ပြင်ရန်" data-id="${t.id}">✎</button>
           <button class="ledger-del" title="ဖျက်ရန်" data-id="${t.id}">×</button>
@@ -1049,102 +922,15 @@
     });
   }
 
-  function render(){
-    const list = monthTx();
-    renderSummary(list);
-    renderChart(list);
-    renderRecurringList();
-    renderLedger(list);
-  }
-
-  // ---------- Modal ----------
-  let editingId = null;
-
-  function openModal(existing){
-    editingId = existing ? existing.id : null;
-    const isEdit = !!existing;
-
-    $("modalTitle").textContent = isEdit ? "Edit transaction" : "Add transaction";
-    $("saveAdd").textContent = isEdit ? "Save changes" : "Save transaction";
-    $("recurSection").style.display = isEdit ? "none" : "flex";
-
-    $("fDate").value = existing ? existing.date : todayISO();
-    $("fAmount").value = existing ? existing.amount : "";
-    $("fDesc").value = existing ? existing.description : "";
-    $("fRecurring").checked = false;
-    $("fFreq").disabled = true;
-    setType(existing ? existing.type : "expense", existing ? existing.category : undefined);
-    $("overlay").classList.add("open");
-    setTimeout(()=> $("fAmount").focus(), 50);
-  }
-  function closeModal(){ $("overlay").classList.remove("open"); editingId = null; }
-
-  function setType(type, presetCategory){
-    currentType = type;
-    document.querySelectorAll("#typeToggle button").forEach(b => {
-      b.classList.toggle("active", b.dataset.type === type);
-      b.classList.toggle("expense-active", b.dataset.type === "expense" && b.dataset.type === type);
-      b.classList.toggle("income-active", b.dataset.type === "income" && b.dataset.type === type);
-    });
-    const sel = $("fCategory");
-    sel.innerHTML = "";
-    CATEGORIES[type].forEach(c => {
-      const opt = document.createElement("option");
-      opt.value = c; opt.textContent = c;
-      sel.appendChild(opt);
-    });
-    if(presetCategory && CATEGORIES[type].includes(presetCategory)){
-      sel.value = presetCategory;
-    }
-  }
-
-  async function saveTransaction(){
-    const amount = parseFloat($("fAmount").value);
-    const date = $("fDate").value;
-    const category = $("fCategory").value;
-    const description = $("fDesc").value.trim();
-    const isRecurring = $("fRecurring").checked;
-    const freq = $("fFreq").value;
-
-    if(!amount || amount <= 0){ showToast("ပမာဏကို 0 ထက်ကြီးအောင် ထည့်ပါ"); return; }
-    if(!date){ showToast("ရက်စွဲ ရွေးပါ"); return; }
-
-    let ok;
-    if(editingId){
-      const t = transactions.find(x => x.id === editingId);
-      if(t){
-        t.type = currentType; t.amount = amount; t.category = category;
-        t.description = description; t.date = date;
-      }
-      ok = await saveTx();
-    } else if(isRecurring){
-      const recId = uid();
-      recurring.push({ id: recId, type: currentType, amount, category, description, freq, nextDate: date, active: true });
-      runRecurringEngine();
-      const okRec = await saveRec();
-      const okTx = await saveTx();
-      ok = okRec && okTx;
-    } else {
-      transactions.push({ id: uid(), type: currentType, amount, category, description, date });
-      ok = await saveTx();
-    }
-
-    viewMonth = date.slice(0,7);
-    populateMonthSelect();
-    render();
-    closeModal();
-    if(ok){
-      showToast(editingId ? "စာရင်း ပြင်ပြီးပါပြီ" : "စာရင်း သိမ်းပြီးပါပြီ");
-    } else {
-      showToast("⚠ Google Sheet ထဲ မသိမ်းနိုင်ပါ — sync status ကို စစ်ပါ");
-    }
-  }
-
   // ---------- CSV export ----------
   function exportCsv(){
-    const rows = [["Date","Type","Category","Description","Amount","Recurring"]];
-    transactions.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(t => {
-      rows.push([t.date, t.type, t.category, (t.description||"").replace(/"/g,'""'), t.amount.toFixed(2), t.recurringId ? "yes" : "no"]);
+    const rows = [["Date","Type","Category","Description","Amount","Running Balance","Recurring"]];
+    const chrono = transactions.slice().sort((a,b)=>a.date.localeCompare(b.date));
+    let runBal = 0;
+    chrono.forEach(t => {
+      if(t.type === "income") runBal += t.amount;
+      else runBal -= t.amount;
+      rows.push([t.date, t.type, t.category, (t.description||"").replace(/"/g,'""'), t.amount.toFixed(2), runBal.toFixed(2), t.recurringId ? "yes" : "no"]);
     });
     const csv = rows.map(r => r.map(v => `"${v}"`).join(",")).join("\n");
     const blob = new Blob([csv], {type:"text/csv"});
@@ -1237,8 +1023,6 @@
   }
 
   async function saveSettings(){
-    // Detect renames (matched by id) and propagate them to existing data
-    // so past transactions keep displaying under the new name.
     const renameMap = {};
     settingsDraft.forEach(nc => {
       const old = categoryList.find(o => o.id === nc.id);
@@ -1259,7 +1043,6 @@
     if(recChanged) await saveRec();
 
     closeSettings();
-    populateMonthSelect();
     render();
     showToast("Category များ သိမ်းပြီးပါပြီ");
   }
@@ -1270,13 +1053,11 @@
     recurring = await loadRec();
     const changed = runRecurringEngine();
     if(changed){ await saveTx(); await saveRec(); }
-    populateMonthSelect();
     render();
   }
 
   // ---------- Wire up ----------
   function init(){
-    viewMonth = todayISO().slice(0,7);
     setSyncStatus();
 
     $("openAdd").addEventListener("click", () => openModal());
@@ -1284,9 +1065,6 @@
     $("overlay").addEventListener("click", (e) => { if(e.target.id === "overlay") closeModal(); });
     $("saveAdd").addEventListener("click", saveTransaction);
     $("exportCsv").addEventListener("click", exportCsv);
-    $("prevMonth").addEventListener("click", () => shiftMonth(-1));
-    $("nextMonth").addEventListener("click", () => shiftMonth(1));
-    $("monthSelect").addEventListener("change", (e) => { viewMonth = e.target.value; render(); });
     $("fRecurring").addEventListener("change", (e) => { $("fFreq").disabled = !e.target.checked; });
     document.querySelectorAll("#typeToggle button").forEach(b => {
       b.addEventListener("click", () => setType(b.dataset.type));
