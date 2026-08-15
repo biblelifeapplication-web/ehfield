@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>အနိမ့်လယ်စာရင်း — Farm Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --paper: #EEF0E8;
+    --paper-raised: #F7F8F3;
+    --ink: #202C2C;
+    --ink-soft: #5B6B67;
+    --ink-faint: #93A19C;
+    --line: #CFD3C4;
+    --line-strong: #B9BEAD;
+    --income: #3F6B52;
+    --income-soft: #E1EAE3;
+    --expense: #8C3D25;
+    --expense-soft: #F1E1D8;
+    --gold: #A9832E;
+    --gold-soft: #F1E8D4;
+    --white: #FFFFFF;
+    --shadow: 0 1px 2px rgba(32,44,44,0.06), 0 4px 16px rgba(32,44,44,0.05);
+    --radius: 10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  ::selection{ background:var(--gold-soft); }
+
+  a{color:inherit;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select{font-family:inherit;}
+
+  .wrap{
+    max-width:1040px;
+    margin:0 auto;
+    padding:40px 24px 120px;
+  }
+
+  /* ---------- Header ---------- */
+  header.top{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:8px;
+    flex-wrap:wrap;
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  .brand .mark{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:30px;
+    letter-spacing:-0.01em;
+  }
+  .brand .tag{
+    font-size:12px;
+    color:var(--ink-soft);
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    border-left:1px solid var(--line-strong);
+    padding-left:12px;
+  }
+  .sync-note{
+    font-size:12px;
+    color:var(--ink-faint);
+    display:flex;
+    align-items:center;
+    gap:6px;
+    max-width:280px;
+    text-align:right;
+    line-height:1.5;
+    overflow-wrap:anywhere;
+  }
+  .sync-dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--income);
+    flex:none;
+  }
+  .sync-dot.offline{ background:var(--gold); }
+
+  .book-bar{
+    display:flex; align-items:center; gap:10px;
+    margin-top:18px;
+  }
+  .book-bar-label{
+    font-size:11px; text-transform:uppercase; letter-spacing:0.09em;
+    color:var(--ink-soft);
+  }
+  .book-bar select{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13.5px; font-weight:500; color:var(--ink);
+    background:var(--gold-soft); border:1px solid var(--gold-soft);
+    border-radius:999px; padding:6px 14px; cursor:pointer;
+  }
+
+  header.controls{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin:28px 0 24px;
+    flex-wrap:wrap;
+    gap:14px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:20px;
+  }
+  .month-nav{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:'Fraunces', serif;
+    font-size:20px;
+  }
+  .month-nav button{
+    background:none;
+    border:1px solid var(--line-strong);
+    border-radius:50%;
+    width:28px;height:28px;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink-soft);
+    font-size:14px;
+    transition:background .15s ease;
+  }
+  .month-nav button:hover{ background:var(--paper-raised); }
+  .month-nav select{
+    border:none;background:none;font-family:'Fraunces', serif;font-size:20px;color:var(--ink);
+    appearance:none;cursor:pointer;text-align:center;
+  }
+
+  .btn-add{
+    background:var(--ink);
+    color:var(--paper-raised);
+    border:none;
+    padding:10px 18px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:500;
+    letter-spacing:0.02em;
+    display:flex;align-items:center;gap:8px;
+    box-shadow:var(--shadow);
+    transition:transform .12s ease;
+  }
+  .btn-add:hover{ transform:translateY(-1px); }
+  .btn-add:active{ transform:translateY(0); }
+
+  /* ---------- Summary cards ---------- */
+  .summary{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+    margin-bottom:32px;
+  }
+  .card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px 20px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card .label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.09em;
+    color:var(--ink-soft);
+    margin-bottom:10px;
+  }
+  .card .value{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:26px;
+    font-weight:500;
+    letter-spacing:-0.01em;
+    overflow-wrap:anywhere;
+  }
+  .card.income .value{ color:var(--income); }
+  .card.expense .value{ color:var(--expense); }
+  .card.balance .value{ color:var(--ink); }
+  .card .accent-bar{
+    position:absolute; left:0; top:0; bottom:0; width:3px;
+  }
+  .card.income .accent-bar{ background:var(--income); }
+  .card.expense .accent-bar{ background:var(--expense); }
+  .card.balance .accent-bar{ background:var(--gold); }
+
+  /* ---------- Main grid ---------- */
+  .main-grid{
+    display:grid;
+    grid-template-columns:320px 1fr;
+    gap:24px;
+    align-items:start;
+  }
+  @media (max-width:800px){
+    .main-grid{ grid-template-columns:1fr; }
+    .summary{ grid-template-columns:1fr; }
+  }
+
+  .panel{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px;
+  }
+  .panel h2{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:17px;
+    margin:0 0 4px;
+  }
+  .panel .sub{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:18px;
+  }
+
+  .chart-wrap{
+    position:relative;
+    height:220px;
+    margin-bottom:16px;
+  }
+  .empty-chart{
+    display:flex;align-items:center;justify-content:center;
+    height:220px;color:var(--ink-faint);font-size:13px;text-align:center;
+  }
+  .legend{
+    display:flex; flex-direction:column; gap:8px;
+    margin-top:4px;
+  }
+  .legend-row{
+    display:flex; align-items:center; gap:8px;
+    font-size:12.5px;
+  }
+  .legend-swatch{
+    width:9px;height:9px;border-radius:2px;flex:none;
+  }
+  .legend-cat{ flex:1; color:var(--ink-soft); overflow-wrap:anywhere; min-width:0; }
+  .legend-amt{ font-family:'IBM Plex Mono', monospace; }
+
+  .recurring-list{
+    margin-top:22px;
+    padding-top:18px;
+    border-top:1px solid var(--line);
+  }
+  .recurring-item{
+    display:flex; justify-content:space-between; align-items:center; gap:8px;
+    font-size:12.5px; padding:7px 0; color:var(--ink-soft);
+  }
+  .recurring-item .name{ color:var(--ink); overflow-wrap:anywhere; min-width:0; }
+  .recurring-item .freq{
+    font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em;
+    background:var(--gold-soft); color:var(--gold); padding:2px 7px; border-radius:999px;
+  }
+
+  /* ---------- Ledger list ---------- */
+  .ledger-header{
+    display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;
+  }
+  .ledger-list{
+    list-style:none; margin:14px 0 0; padding:0;
+  }
+  .ledger-row{
+    display:flex; align-items:baseline; gap:10px;
+    padding:13px 2px;
+    border-bottom:1px dashed var(--line);
+  }
+  .ledger-row:last-child{ border-bottom:none; }
+  .ledger-date{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:11px; color:var(--ink-faint);
+    width:76px; flex:none; padding-top:2px;
+  }
+  .ledger-main{ flex:1; min-width:0; }
+  .ledger-desc-row{
+    display:flex; align-items:baseline; gap:6px;
+  }
+  .ledger-desc{
+    font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .ledger-leader{
+    flex:1; border-bottom:1px dotted var(--line-strong);
+    height:0; margin-bottom:5px; min-width:12px;
+  }
+  .ledger-cat{
+    font-size:11px; color:var(--ink-soft); margin-top:3px;
+    display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+  }
+  .cat-dot{ width:6px;height:6px;border-radius:50%; flex:none; }
+  .recur-badge{
+    font-size:9.5px; text-transform:uppercase; letter-spacing:0.05em;
+    color:var(--gold); border:1px solid var(--gold-soft); padding:1px 5px; border-radius:999px;
+  }
+  .ledger-amt{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14.5px; font-weight:500;
+    flex:none; width:96px; text-align:right;
+  }
+  .ledger-amt.income{ color:var(--income); }
+  .ledger-amt.expense{ color:var(--expense); }
+  .ledger-actions{
+    display:flex; align-items:center; gap:2px; flex:none;
+    opacity:0; transition:opacity .12s ease;
+  }
+  .ledger-row:hover .ledger-actions{ opacity:1; }
+  .ledger-edit, .ledger-del{
+    background:none;border:none;color:var(--ink-faint);font-size:14px;
+    width:22px;height:22px;display:flex;align-items:center;justify-content:center;
+    border-radius:5px;
+  }
+  .ledger-edit:hover{ color:var(--ink); background:var(--paper); }
+  .ledger-del{ font-size:16px; }
+  .ledger-del:hover{ color:var(--expense); background:var(--paper); }
+
+  .empty-ledger{
+    padding:40px 10px; text-align:center; color:var(--ink-faint); font-size:13px;
+  }
+
+  .toolbar{
+    display:flex; gap:8px; align-items:center;
+  }
+  .toolbar button{
+    background:none; border:1px solid var(--line-strong); color:var(--ink-soft);
+    border-radius:999px; padding:6px 13px; font-size:12px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .toolbar button:hover{ background:var(--paper); color:var(--ink); }
+
+  /* ---------- Modal ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(32,44,44,0.35);
+    display:none; align-items:flex-start; justify-content:center;
+    padding:60px 16px; z-index:50; overflow-y:auto;
+    backdrop-filter:blur(1px);
+  }
+  .overlay.open{ display:flex; }
+  .modal{
+    background:var(--paper-raised);
+    border-radius:14px;
+    width:100%; max-width:440px;
+    box-shadow:0 20px 50px rgba(32,44,44,0.25);
+    padding:28px;
+  }
+  .modal h3{
+    font-family:'Fraunces', serif; font-weight:500; font-size:20px; margin:0 0 20px;
+  }
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block; font-size:11px; text-transform:uppercase; letter-spacing:0.07em;
+    color:var(--ink-soft); margin-bottom:7px;
+  }
+  .field input, .field select{
+    width:100%; padding:10px 12px; border:1px solid var(--line-strong);
+    border-radius:7px; font-size:14px; background:var(--white); color:var(--ink);
+  }
+  .field input:focus, .field select:focus{
+    outline:2px solid var(--gold); outline-offset:1px;
+  }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .type-toggle{
+    display:flex; border:1px solid var(--line-strong); border-radius:7px; overflow:hidden;
+  }
+  .type-toggle button{
+    flex:1; padding:10px; border:none; background:var(--white); color:var(--ink-soft); font-size:13px;
+  }
+  .type-toggle button.active.expense-active{ background:var(--expense-soft); color:var(--expense); font-weight:500; }
+  .type-toggle button.active.income-active{ background:var(--income-soft); color:var(--income); font-weight:500; }
+  .recur-row{
+    display:flex; align-items:center; gap:8px; margin-bottom:16px; font-size:13px; color:var(--ink-soft);
+  }
+  .recur-row input[type=checkbox]{ width:15px;height:15px; }
+
+  .cat-row{
+    display:flex; align-items:center; gap:8px;
+  }
+  .cat-row-color{
+    width:32px; height:32px; padding:2px; border:1px solid var(--line-strong);
+    border-radius:7px; flex:none; background:var(--white);
+  }
+  .cat-row-name{
+    flex:1; min-width:0; padding:8px 10px; border:1px solid var(--line-strong);
+    border-radius:7px; font-size:13.5px; background:var(--white); color:var(--ink);
+  }
+  .cat-row-name:focus{ outline:2px solid var(--gold); outline-offset:1px; }
+  .cat-row-del{
+    background:none; border:none; color:var(--ink-faint); font-size:18px;
+    width:26px; height:26px; flex:none; border-radius:6px;
+  }
+  .cat-row-del:hover{ color:var(--expense); background:var(--paper); }
+
+  .modal-actions{
+    display:flex; justify-content:flex-end; gap:10px; margin-top:22px;
+  }
+  .btn-secondary{
+    background:none; border:1px solid var(--line-strong); padding:9px 16px; border-radius:999px; font-size:13px; color:var(--ink-soft);
+  }
+  .btn-primary{
+    background:var(--ink); color:var(--paper-raised); border:none; padding:9px 20px; border-radius:999px; font-size:13px; font-weight:500;
+  }
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:var(--paper-raised); padding:10px 18px; border-radius:999px;
+    font-size:13px; opacity:0; pointer-events:none; transition:all .25s ease; z-index:60;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; }
+  }
+
+  /* ---------- Phone refinements ---------- */
+  @media (max-width:480px){
+    .wrap{ padding:24px 14px 100px; }
+    header.top{ gap:10px; }
+    .brand .mark{ font-size:24px; }
+    .sync-note{ max-width:100%; text-align:left; }
+
+    header.controls{ flex-direction:column; align-items:stretch; gap:12px; }
+    header.controls > div[style*="flex"]{ justify-content:stretch; }
+    header.controls > div[style*="flex"] .btn-add{ flex:1 !important; }
+    .month-nav{ justify-content:space-between; }
+    .month-nav select{ flex:1; }
+    .btn-add{ justify-content:center; }
+
+    .card{ padding:14px 16px; }
+    .card .value{ font-size:21px; }
+
+    .panel{ padding:16px; }
+
+    .ledger-row{ flex-wrap:wrap; row-gap:6px; padding:12px 0; }
+    .ledger-date{ width:auto; order:1; }
+    .ledger-main{ order:3; flex-basis:100%; min-width:0; }
+    .ledger-desc{
+      white-space:normal; overflow:visible; text-overflow:clip;
+      overflow-wrap:anywhere; line-height:1.4;
+    }
+    .ledger-amt{ order:2; width:auto; margin-left:auto; }
+    .ledger-actions{ order:4; opacity:1; margin-left:auto; }
+    .ledger-leader{ display:none; }
+
+    .brand{ flex-wrap:wrap; row-gap:2px; min-width:0; }
+    .brand .tag{
+      border-left:none; padding-left:0; white-space:normal;
+      overflow-wrap:anywhere; flex-basis:100%;
+    }
+
+    .modal{ padding:20px; border-radius:12px; }
+    .row2{ grid-template-columns:1fr; }
+    .recur-row{ flex-wrap:wrap; }
+    .recur-row select{ margin-left:0 !important; width:100%; }
+    .modal-actions{ flex-direction:column-reverse; }
+    .modal-actions button{ width:100%; }
+
+    .toolbar button{ padding:7px 12px; }
+
+    /* keep inputs at 16px+ so iOS Safari doesn't zoom in on focus */
+    .field input, .field select{ font-size:16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="mark">အနိမ့်လယ်စာရင်း</span>
+      <span class="tag">လယ်ယာစာရင်း</span>
+    </div>
+    <div class="sync-note">
+      <span class="sync-dot" id="syncDot"></span>
+      <span id="syncText">Checking sync status…</span>
+    </div>
+  </header>
+
+  <script>
+    // Runs first, independent of the main script below — if anything in the
+    // app's code throws or fails to parse, show it here instead of leaving
+    // "Checking sync status…" stuck with no explanation.
+    window.addEventListener("error", function(e){
+      var dot = document.getElementById("syncDot");
+      var text = document.getElementById("syncText");
+      if(text) text.textContent = "App Error — " + (e.message || "တစ်ခုခု မှားယွင်းနေပါတယ်") +
+        (e.lineno ? " (line " + e.lineno + ")" : "");
+      if(dot) dot.classList.add("offline");
+    });
+  </script>
+
+  <header class="controls">
+    <div class="month-nav">
+      <button id="prevMonth" aria-label="ယခင်လ">‹</button>
+      <select id="monthSelect"></select>
+      <button id="nextMonth" aria-label="နောက်လ">›</button>
+    </div>
+    <div style="display:flex; gap:8px; flex:1; justify-content:flex-end;">
+      <button class="btn-secondary" id="openSettings" title="Category များ စီမံရန်" style="border-radius:999px; padding:10px 14px; flex:none;">⚙</button>
+      <button class="btn-add" id="openAdd" style="flex:none;">＋ စာရင်းအသစ်ထည့်ရန်</button>
+    </div>
+  </header>
+
+  <section class="summary">
+    <div class="card income"><div class="accent-bar"></div><div class="label">ဒီလ ဝင်ငွေ</div><div class="value" id="sumIncome">$0.00</div></div>
+    <div class="card expense"><div class="accent-bar"></div><div class="label">ဒီလ အသုံးစရိတ်</div><div class="value" id="sumExpense">$0.00</div></div>
+    <div class="card balance"><div class="accent-bar"></div><div class="label">လက်ကျန်ငွေ</div><div class="value" id="sumBalance">$0.00</div></div>
+  </section>
+
+  <section class="main-grid">
+    <div class="panel">
+      <h2>Category အလိုက်</h2>
+      <div class="sub">ရွေးထားတဲ့လရဲ့ အသုံးစရိတ်များ</div>
+      <div class="chart-wrap"><canvas id="catChart"></canvas></div>
+      <div id="chartEmpty" class="empty-chart" style="display:none;">ဒီလအတွက် အသုံးစရိတ် မထည့်ရသေးပါ။</div>
+      <div class="legend" id="legend"></div>
+
+      <div class="recurring-list">
+        <h2 style="font-size:14px;">ပုံမှန်ထပ်ဖြစ်</h2>
+        <div class="sub" style="margin-bottom:8px;">အလိုအလျောက် ဆက်လက် ထည့်သွင်းမည်</div>
+        <div id="recurringList"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ledger-header">
+        <h2>စာရင်းများ</h2>
+        <div class="toolbar">
+          <button id="exportCsv">⇩ CSV ထုတ်ယူရန်</button>
+        </div>
+      </div>
+      <div class="sub" id="ledgerSub">ရွေးထားတဲ့လရဲ့ စာရင်းအားလုံး</div>
+      <ul class="ledger-list" id="ledgerList"></ul>
+      <div class="empty-ledger" id="ledgerEmpty" style="display:none;">ဒီလအတွက် စာရင်းမရှိသေးပါ။ အပေါ်က ခလုတ်ကနေ ပထမဆုံး စာရင်းထည့်ပါ။</div>
+    </div>
+  </section>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="modalTitle">စာရင်းအသစ်ထည့်ရန်</h3>
+    <div class="type-toggle" id="typeToggle">
+      <button type="button" data-type="expense" class="active expense-active">အသုံးစရိတ်</button>
+      <button type="button" data-type="income">ဝင်ငွေ</button>
+    </div>
+    <div style="height:16px;"></div>
+    <div class="row2">
+      <div class="field">
+        <label for="fAmount">ပမာဏ</label>
+        <input id="fAmount" type="number" min="0" step="0.01" placeholder="0.00">
+      </div>
+      <div class="field">
+        <label for="fDate">ရက်စွဲ</label>
+        <input id="fDate" type="date">
+      </div>
+    </div>
+    <div class="field">
+      <label for="fCategory">အမျိုးအစား</label>
+      <select id="fCategory"></select>
+    </div>
+    <div class="field">
+      <label for="fDesc">အကြောင်းအရာ</label>
+      <input id="fDesc" type="text" placeholder="ဥပမာ - မျိုးစေ့ဝယ်ယူခ">
+    </div>
+    <div class="recur-row" id="recurSection">
+      <input type="checkbox" id="fRecurring">
+      <label for="fRecurring" style="margin:0;font-size:13px;color:var(--ink-soft);">ပုံမှန်ထပ်ခါထပ်ခါဖြစ်</label>
+      <select id="fFreq" style="margin-left:auto; max-width:130px;" disabled>
+        <option value="weekly">အပတ်စဉ်</option>
+        <option value="monthly" selected>လစဉ်</option>
+        <option value="yearly">နှစ်စဉ်</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelAdd">မလုပ်တော့ပါ</button>
+      <button class="btn-primary" id="saveAdd">စာရင်းသိမ်းမည်</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="settingsOverlay">
+  <div class="modal" style="max-width:480px;">
+    <h3>Category များ စီမံရန်</h3>
+    <div class="type-toggle" id="settingsTypeToggle">
+      <button type="button" data-type="expense" class="active expense-active">အသုံးစရိတ်</button>
+      <button type="button" data-type="income">ဝင်ငွေ</button>
+    </div>
+    <div style="height:16px;"></div>
+    <div id="settingsCatList" style="display:flex; flex-direction:column; gap:8px; max-height:320px; overflow-y:auto; padding-right:2px;"></div>
+    <div style="height:14px;"></div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <input type="color" id="newCatColor" value="#8A8F80" style="width:38px; height:38px; padding:2px; border:1px solid var(--line-strong); border-radius:7px; flex:none; background:var(--white);">
+      <input type="text" id="newCatName" placeholder="Category နာမည်အသစ်" style="flex:1; padding:10px 12px; border:1px solid var(--line-strong); border-radius:7px; font-size:14px; background:var(--white); color:var(--ink);">
+      <button class="btn-secondary" id="addCatBtn" style="flex:none;">＋ ထည့်ရန်</button>
+    </div>
+    <div class="sub" style="margin-top:12px; margin-bottom:0;">Category နာမည်ပြောင်းရင် ယခင်ထည့်ထားပြီးသား စာရင်းတွေမှာပါ auto update ဖြစ်သွားမည်။ ဖျက်လိုက်ရင်တော့ ယခင်စာရင်းတွေက အဟောင်းနာမည်အတိုင်း ကျန်နေမည်။</div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="closeSettings">မလုပ်တော့ပါ</button>
+      <button class="btn-primary" id="saveSettings">Category များ သိမ်းမည်</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // Categories are now editable (Settings). Each "book" (account) has its
+  // own category set, transactions, and recurring templates.
+  const DEFAULT_CATEGORIES_HOUSEHOLD = [
+    { id:"inc1", type:"income", name:"Salary", color:"#3F6B52" },
+    { id:"inc2", type:"income", name:"Freelance", color:"#5B7C99" },
+    { id:"inc3", type:"income", name:"Other Income", color:"#8A8F80" },
+    { id:"exp1", type:"expense", name:"ဖုန်းဖိုး", color:"#5B7C99" },
+    { id:"exp2", type:"expense", name:"မီတာခ", color:"#A9832E" },
+    { id:"exp3", type:"expense", name:"ရေဖိုး", color:"#4F9C93" },
+    { id:"exp4", type:"expense", name:"အစားအသောက်", color:"#3F6B52" },
+    { id:"exp5", type:"expense", name:"ကလေးအသုံးစရိတ်", color:"#B15E7C" },
+    { id:"exp6", type:"expense", name:"မိသားစုအသုံးစရိတ်", color:"#7C5BA6" },
+    { id:"exp7", type:"expense", name:"အင်တာနက်ဘီလ်", color:"#6B8CAE" },
+    { id:"exp8", type:"expense", name:"ကျန်းမာရေး", color:"#8C3D25" },
+    { id:"exp9", type:"expense", name:"အထွေထွေ", color:"#8A8F80" }
+  ];
+  const DEFAULT_CATEGORIES_FARMING = [
+    { id:"finc1", type:"income", name:"ဆန်/စပါး ရောင်းရငွေ", color:"#3F6B52" },
+    { id:"finc2", type:"income", name:"အခြားဝင်ငွေ", color:"#8A8F80" },
+    { id:"fexp1", type:"expense", name:"မျိုးစေ့ခ", color:"#A9832E" },
+    { id:"fexp2", type:"expense", name:"မြေဩဇာ/ဓာတ်ဆား", color:"#4F9C93" },
+    { id:"fexp3", type:"expense", name:"ပိုးသတ်ဆေး", color:"#8C3D25" },
+    { id:"fexp4", type:"expense", name:"အလုပ်သမားခ", color:"#5B7C99" },
+    { id:"fexp5", type:"expense", name:"စက်/ကိရိယာခ", color:"#7C5BA6" },
+    { id:"fexp6", type:"expense", name:"မြေငှားခ", color:"#B15E7C" },
+    { id:"fexp7", type:"expense", name:"အခြား", color:"#8A8F80" }
+  ];
+  const GENERIC_DEFAULT_CATEGORIES = [
+    { id:"ginc1", type:"income", name:"ဝင်ငွေ", color:"#3F6B52" },
+    { id:"gexp1", type:"expense", name:"အထွေထွေ", color:"#8A8F80" }
+  ];
+  function defaultCategoriesForBook(bookId){
+    if(bookId === "household") return DEFAULT_CATEGORIES_HOUSEHOLD;
+    if(bookId === "farming") return DEFAULT_CATEGORIES_FARMING;
+    return GENERIC_DEFAULT_CATEGORIES;
+  }
+
+  // This file is intentionally single-book and isolated: it always points at
+  // its own dedicated Google Sheet (see CONFIG.SHEETS_URL below), so there is
+  // no book switcher and no way to reach any other spreadsheet/account from
+  // here — sheet names stay unprefixed since this Sheet only ever holds
+  // farming data.
+  const currentBook = "farming";
+  function sheetType(base){ return base; }
+
+  let categoryList = []; // [{id, type, name, color}]
+  let CATEGORIES = { income: [], expense: [] };
+  let CAT_COLORS = {};
+
+  function rebuildCategoryMaps(){
+    CATEGORIES = {
+      income: categoryList.filter(c => c.type === "income").map(c => c.name),
+      expense: categoryList.filter(c => c.type === "expense").map(c => c.name)
+    };
+    CAT_COLORS = {};
+    categoryList.forEach(c => { CAT_COLORS[c.name] = c.color; });
+  }
+
+  async function loadCategories(){
+    const sheetName = sheetType("categories");
+    const rows = await loadData("categories", sheetName, null);
+    if(!rows || rows.length === 0){
+      categoryList = defaultCategoriesForBook(currentBook).map(c => ({ ...c }));
+      await saveData("categories", sheetName, categoryList);
+    } else {
+      categoryList = rows;
+    }
+    rebuildCategoryMaps();
+  }
+
+  // ---------- Google Sheets config ----------
+  // Paste your deployed Apps Script "Web app URL" between the quotes below.
+  // See google-sheets-code.gs for the backend script and setup steps.
+  const CONFIG = {
+    SHEETS_URL: "https://script.google.com/macros/s/AKfycbyvJOTkZJGKYITJzUvekBM3_9jqMi-Zf-cyxp7fpZt-NQPYj1NWrX_BA1bc6GbHgfSe/exec"
+  };
+  const isConfigured = () => !!CONFIG.SHEETS_URL;
+
+  const HEADERS = {
+    transactions: ["id","type","amount","category","description","date","recurringId"],
+    recurring: ["id","type","amount","category","description","freq","nextDate","active"],
+    categories: ["id","type","name","color"],
+    books: ["id","name"]
+  };
+
+  let memoryStore = {}; // sheetName -> array, used when no Sheets URL is configured
+
+  async function loadData(kind, sheetName, fallback){
+    if(!isConfigured()){
+      return (memoryStore[sheetName] || fallback || []).slice();
+    }
+    try{
+      const res = await fetch(`${CONFIG.SHEETS_URL}?type=${encodeURIComponent(sheetName)}`);
+      const rows = await res.json();
+      return rows.map(r => normalizeRow(kind, r));
+    }catch(e){ return fallback; }
+  }
+
+  function normalizeRow(kind, r){
+    if(kind === "transactions"){
+      const amount = parseFloat(r.amount) || 0;
+      return {
+        id: String(r.id), type: String(r.type||"").trim().toLowerCase(), amount, category: r.category,
+        description: r.description || "", date: String(r.date).slice(0,10),
+        recurringId: r.recurringId || undefined
+      };
+    }
+    if(kind === "recurring"){
+      const amount = parseFloat(r.amount) || 0;
+      // Treat "active" as true unless explicitly marked false — this matters
+      // because a row typed directly into the sheet often leaves this blank.
+      const activeRaw = r.active;
+      const active = !(activeRaw === false || activeRaw === 0 ||
+        ["false","no","0"].includes(String(activeRaw).trim().toLowerCase()));
+      let freq = String(r.freq || "monthly").trim().toLowerCase();
+      if(!["weekly","monthly","yearly"].includes(freq)) freq = "monthly";
+      return {
+        id: r.id ? String(r.id) : uid(),
+        type: String(r.type||"").trim().toLowerCase(),
+        amount, category: r.category,
+        description: r.description || "", freq,
+        nextDate: String(r.nextDate).slice(0,10),
+        active
+      };
+    }
+    if(kind === "categories"){
+      return {
+        id: r.id ? String(r.id) : uid(),
+        type: String(r.type||"").trim().toLowerCase() === "income" ? "income" : "expense",
+        name: r.name, color: r.color || "#8A8F80"
+      };
+    }
+    if(kind === "books"){
+      return { id: r.id ? String(r.id) : uid(), name: r.name };
+    }
+    return r;
+  }
+
+  async function saveData(kind, sheetName, value){
+    if(!isConfigured()){
+      memoryStore[sheetName] = value;
+      return true;
+    }
+    try{
+      const headers = HEADERS[kind];
+      const res = await fetch(CONFIG.SHEETS_URL, {
+        method: "POST",
+        // text/plain avoids a CORS preflight that Apps Script doesn't handle;
+        // the backend still JSON.parses the body regardless of this header.
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ type: sheetName, headers, rows: value })
+      });
+      if(!res.ok){
+        console.error("Save failed:", sheetName, "HTTP", res.status, await res.text().catch(()=>""));
+        return false;
+      }
+      const result = await res.json().catch(() => null);
+      if(!result || result.success !== true){
+        console.error("Save did not confirm success:", sheetName, result);
+        return false;
+      }
+      return true;
+    }catch(e){
+      console.error("Save threw an error:", sheetName, e);
+      return false;
+    }
+  }
+
+  // Convenience wrappers that route to the correct sheet for the active book.
+  async function loadTx(){ return await loadData("transactions", sheetType("transactions"), []); }
+  async function saveTx(){ return await saveData("transactions", sheetType("transactions"), transactions); }
+  async function loadRec(){ return await loadData("recurring", sheetType("recurring"), []); }
+  async function saveRec(){ return await saveData("recurring", sheetType("recurring"), recurring); }
+
+  let transactions = [];
+  let recurring = [];
+  let currentType = "expense";
+  let chart = null;
+  let viewMonth; // "YYYY-MM"
+
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n) => (n<0?"-":"") + "$" + Math.abs(n).toFixed(2);
+  const todayISO = () => new Date().toISOString().slice(0,10);
+
+  function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
+
+  function showToast(msg){
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(t._timer);
+    t._timer = setTimeout(()=> t.classList.remove("show"), 2200);
+  }
+
+  async function setSyncStatus(){
+    const dot = $("syncDot"), text = $("syncText");
+    if(!isConfigured()){
+      dot.classList.add("offline");
+      text.textContent = "မချိတ်ဆက်ရသေးပါ — file ထဲက CONFIG.SHEETS_URL ထဲမှာ Sheets URL ထည့်ပါ";
+      return;
+    }
+    text.textContent = "Sync အခြေအနေ စစ်ဆေးနေသည်…";
+    try{
+      const res = await fetch(`${CONFIG.SHEETS_URL}?type=transactions`);
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json(); // throws if the response isn't JSON (e.g. a login page)
+      if(!Array.isArray(data)) throw new Error("Unexpected response shape");
+      dot.classList.remove("offline");
+      text.textContent = "Google Sheets နဲ့ ချိတ်ဆက်ပြီးပါပြီ — ဒီစာရင်းသုံးသူအားလုံး မြင်နိုင်ပါတယ်";
+    }catch(e){
+      dot.classList.add("offline");
+      text.textContent = "Google Sheet ချိတ်ဆက်မှု မအောင်မြင်ပါ — Apps Script access ကို 'Anyone' ဖြစ်အောင် စစ်ပါ";
+      console.error("Sync check failed:", e);
+    }
+  }
+
+  // ---------- Recurring engine ----------
+  function addInterval(dateStr, freq){
+    const d = new Date(dateStr + "T00:00:00");
+    if(freq === "weekly") d.setDate(d.getDate() + 7);
+    else if(freq === "monthly") d.setMonth(d.getMonth() + 1);
+    else if(freq === "yearly") d.setFullYear(d.getFullYear() + 1);
+    return d.toISOString().slice(0,10);
+  }
+
+  function runRecurringEngine(){
+    const today = todayISO();
+    let changed = false;
+    recurring.forEach(r => {
+      if(!r.active) return;
+      if(!r.nextDate || !/^\d{4}-\d{2}-\d{2}$/.test(r.nextDate)) return; // skip rows with no usable date
+      let guard = 0;
+      while(r.nextDate <= today && guard < 500){
+        transactions.push({
+          id: uid(), type: r.type, amount: r.amount, category: r.category,
+          description: r.description, date: r.nextDate, recurringId: r.id
+        });
+        r.nextDate = addInterval(r.nextDate, r.freq);
+        changed = true;
+        guard++;
+      }
+    });
+    return changed;
+  }
+
+  // ---------- Month handling ----------
+  const MY_MONTHS = ["ဇန်နဝါရီ","ဖေဖော်ဝါရီ","မတ်","ဧပြီ","မေ","ဇွန်","ဇူလိုင်","သြဂုတ်","စက်တင်ဘာ","အောက်တိုဘာ","နိုဝင်ဘာ","ဒီဇင်ဘာ"];
+  const MY_MONTHS_SHORT = ["ဇန်","ဖေ","မတ်","ဧပြီ","မေ","ဇွန်","ဇူလိုင်","သြဂုတ်","စက်","အောက်","နို","ဒီ"];
+  function monthLabel(ym){
+    const [y,m] = ym.split("-").map(Number);
+    return `${MY_MONTHS[m-1]} ${y}`;
+  }
+
+  function populateMonthSelect(){
+    const set = new Set(transactions.map(t => t.date.slice(0,7)));
+    set.add(todayISO().slice(0,7));
+    set.add(viewMonth);
+    const months = Array.from(set).sort();
+    const sel = $("monthSelect");
+    sel.innerHTML = "";
+    months.forEach(m => {
+      const opt = document.createElement("option");
+      opt.value = m; opt.textContent = monthLabel(m);
+      if(m === viewMonth) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  function shiftMonth(delta){
+    const [y,m] = viewMonth.split("-").map(Number);
+    const d = new Date(y, m-1+delta, 1);
+    viewMonth = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
+    populateMonthSelect();
+    render();
+  }
+
+  // ---------- Rendering ----------
+  function monthTx(){
+    return transactions.filter(t => t.date.slice(0,7) === viewMonth)
+      .sort((a,b) => b.date.localeCompare(a.date));
+  }
+
+  // Running (cumulative) balance across ALL transactions ever entered,
+  // in true chronological order — like a bank statement's balance column.
+  // Same-day entries keep their original entry order as the tie-break.
+  function computeBalances(){
+    const withIndex = transactions.map((t, i) => ({ t, i }));
+    withIndex.sort((a, b) => a.t.date.localeCompare(b.t.date) || a.i - b.i);
+    let bal = 0;
+    const map = {};
+    withIndex.forEach(({ t }) => {
+      bal += t.type === "income" ? t.amount : -t.amount;
+      map[t.id] = bal;
+    });
+    return map;
+  }
+
+  function fmtNum(n){
+    const r = Math.round(n);
+    return (r < 0 ? "-" : "") + Math.abs(r).toLocaleString();
+  }
+
+  function renderSummary(list){
+    let inc = 0, exp = 0;
+    list.forEach(t => t.type === "income" ? inc += t.amount : exp += t.amount);
+    $("sumIncome").textContent = fmt(inc);
+    $("sumExpense").textContent = fmt(exp);
+    $("sumBalance").textContent = fmt(inc - exp);
+    $("sumBalance").style.color = (inc - exp) < 0 ? "var(--expense)" : "var(--ink)";
+  }
+
+  function renderChart(list){
+    const byCat = {};
+    list.filter(t => t.type === "expense").forEach(t => {
+      byCat[t.category] = (byCat[t.category] || 0) + t.amount;
+    });
+    const cats = Object.keys(byCat);
+    const wrap = $("catChart").parentElement;
+    const emptyEl = $("chartEmpty");
+    const legend = $("legend");
+    legend.innerHTML = "";
+
+    if(cats.length === 0){
+      wrap.style.display = "none";
+      emptyEl.style.display = "flex";
+      if(chart){ chart.destroy(); chart = null; }
+      return;
+    }
+    wrap.style.display = "block";
+    emptyEl.style.display = "none";
+
+    const data = cats.map(c => byCat[c]);
+    const colors = cats.map(c => CAT_COLORS[c] || "#8A8F80");
+
+    if(chart) chart.destroy();
+    chart = new Chart($("catChart").getContext("2d"), {
+      type: "doughnut",
+      data: { labels: cats, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: "#F7F8F3" }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: "68%",
+        plugins: { legend: { display: false }, tooltip: {
+          callbacks: { label: (ctx) => ctx.label + ": " + fmt(ctx.parsed) }
+        } }
+      }
+    });
+
+    const total = data.reduce((a,b)=>a+b,0);
+    cats.map((c,i) => ({c, v:data[i]})).sort((a,b)=>b.v-a.v).forEach(({c,v}) => {
+      const row = document.createElement("div");
+      row.className = "legend-row";
+      row.innerHTML = `<span class="legend-swatch" style="background:${CAT_COLORS[c]||'#8A8F80'}"></span>
+        <span class="legend-cat">${c}</span>
+        <span class="legend-amt">${fmt(v)} <span style="color:var(--ink-faint)">· ${Math.round(v/total*100)}%</span></span>`;
+      legend.appendChild(row);
+    });
+  }
+
+  function renderRecurringList(){
+    const el = $("recurringList");
+    el.innerHTML = "";
+    const active = recurring.filter(r => r.active);
+    if(active.length === 0){
+      el.innerHTML = '<div style="font-size:12px;color:var(--ink-faint);">ပုံမှန်ထပ်ခါထပ်ခါဖြစ်တဲ့ စာရင်း မထားရသေးပါ။</div>';
+      return;
+    }
+    active.forEach(r => {
+      const row = document.createElement("div");
+      row.className = "recurring-item";
+      row.innerHTML = `<span class="name">${r.description || r.category}</span>
+        <span style="display:flex;align-items:center;gap:8px;">
+          <span class="freq">${r.freq}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;color:${r.type==='income'?'var(--income)':'var(--expense)'}">${fmt(r.amount)}</span>
+        </span>`;
+      el.appendChild(row);
+    });
+  }
+
+  function renderLedger(list){
+    const ul = $("ledgerList");
+    const emptyEl = $("ledgerEmpty");
+    ul.innerHTML = "";
+    $("ledgerSub").textContent = list.length + " ခု" + " · " + monthLabel(viewMonth);
+
+    if(list.length === 0){
+      emptyEl.style.display = "block";
+      return;
+    }
+    emptyEl.style.display = "none";
+
+    list.forEach(t => {
+      const li = document.createElement("li");
+      li.className = "ledger-row";
+      const dObj = new Date(t.date + "T00:00:00");
+      const dateShort = `${MY_MONTHS_SHORT[dObj.getMonth()]} ${dObj.getDate()}`;
+      li.innerHTML = `
+        <div class="ledger-date">${dateShort}</div>
+        <div class="ledger-main">
+          <div class="ledger-desc-row">
+            <span class="ledger-desc">${t.description || t.category}</span>
+            <span class="ledger-leader"></span>
+          </div>
+          <div class="ledger-cat">
+            <span class="cat-dot" style="background:${CAT_COLORS[t.category]||'#8A8F80'}"></span>
+            ${t.category}${t.recurringId ? '<span class="recur-badge">ပုံမှန်ထပ်ဖြစ်</span>' : ''}
+          </div>
+        </div>
+        <div class="ledger-amt ${t.type}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</div>
+        <div class="ledger-actions">
+          <button class="ledger-edit" title="ပြင်ရန်" data-id="${t.id}">✎</button>
+          <button class="ledger-del" title="ဖျက်ရန်" data-id="${t.id}">×</button>
+        </div>
+      `;
+      ul.appendChild(li);
+    });
+
+    ul.querySelectorAll(".ledger-edit").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-id");
+        const t = transactions.find(x => x.id === id);
+        if(t) openModal(t);
+      });
+    });
+
+    ul.querySelectorAll(".ledger-del").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        transactions = transactions.filter(t => t.id !== id);
+        await saveTx();
+        render();
+        showToast("စာရင်း ဖျက်ပြီးပါပြီ");
+      });
+    });
+  }
+
+  function render(){
+    const list = monthTx();
+    renderSummary(list);
+    renderChart(list);
+    renderRecurringList();
+    renderLedger(list);
+  }
+
+  // ---------- Modal ----------
+  let editingId = null;
+
+  function openModal(existing){
+    editingId = existing ? existing.id : null;
+    const isEdit = !!existing;
+
+    $("modalTitle").textContent = isEdit ? "Edit transaction" : "Add transaction";
+    $("saveAdd").textContent = isEdit ? "Save changes" : "Save transaction";
+    $("recurSection").style.display = isEdit ? "none" : "flex";
+
+    $("fDate").value = existing ? existing.date : todayISO();
+    $("fAmount").value = existing ? existing.amount : "";
+    $("fDesc").value = existing ? existing.description : "";
+    $("fRecurring").checked = false;
+    $("fFreq").disabled = true;
+    setType(existing ? existing.type : "expense", existing ? existing.category : undefined);
+    $("overlay").classList.add("open");
+    setTimeout(()=> $("fAmount").focus(), 50);
+  }
+  function closeModal(){ $("overlay").classList.remove("open"); editingId = null; }
+
+  function setType(type, presetCategory){
+    currentType = type;
+    document.querySelectorAll("#typeToggle button").forEach(b => {
+      b.classList.toggle("active", b.dataset.type === type);
+      b.classList.toggle("expense-active", b.dataset.type === "expense" && b.dataset.type === type);
+      b.classList.toggle("income-active", b.dataset.type === "income" && b.dataset.type === type);
+    });
+    const sel = $("fCategory");
+    sel.innerHTML = "";
+    CATEGORIES[type].forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c; opt.textContent = c;
+      sel.appendChild(opt);
+    });
+    if(presetCategory && CATEGORIES[type].includes(presetCategory)){
+      sel.value = presetCategory;
+    }
+  }
+
+  async function saveTransaction(){
+    const amount = parseFloat($("fAmount").value);
+    const date = $("fDate").value;
+    const category = $("fCategory").value;
+    const description = $("fDesc").value.trim();
+    const isRecurring = $("fRecurring").checked;
+    const freq = $("fFreq").value;
+
+    if(!amount || amount <= 0){ showToast("ပမာဏကို 0 ထက်ကြီးအောင် ထည့်ပါ"); return; }
+    if(!date){ showToast("ရက်စွဲ ရွေးပါ"); return; }
+
+    let ok;
+    if(editingId){
+      const t = transactions.find(x => x.id === editingId);
+      if(t){
+        t.type = currentType; t.amount = amount; t.category = category;
+        t.description = description; t.date = date;
+      }
+      ok = await saveTx();
+    } else if(isRecurring){
+      const recId = uid();
+      recurring.push({ id: recId, type: currentType, amount, category, description, freq, nextDate: date, active: true });
+      runRecurringEngine();
+      const okRec = await saveRec();
+      const okTx = await saveTx();
+      ok = okRec && okTx;
+    } else {
+      transactions.push({ id: uid(), type: currentType, amount, category, description, date });
+      ok = await saveTx();
+    }
+
+    viewMonth = date.slice(0,7);
+    populateMonthSelect();
+    render();
+    closeModal();
+    if(ok){
+      showToast(editingId ? "စာရင်း ပြင်ပြီးပါပြီ" : "စာရင်း သိမ်းပြီးပါပြီ");
+    } else {
+      showToast("⚠ Google Sheet ထဲ မသိမ်းနိုင်ပါ — sync status ကို စစ်ပါ");
+    }
+  }
+
+  // ---------- CSV export ----------
+  function exportCsv(){
+    const rows = [["Date","Type","Category","Description","Amount","Recurring"]];
+    transactions.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(t => {
+      rows.push([t.date, t.type, t.category, (t.description||"").replace(/"/g,'""'), t.amount.toFixed(2), t.recurringId ? "yes" : "no"]);
+    });
+    const csv = rows.map(r => r.map(v => `"${v}"`).join(",")).join("\n");
+    const blob = new Blob([csv], {type:"text/csv"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `anaimlay-export-${todayISO()}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    showToast("CSV ဒေါင်းလုတ်ချပြီးပါပြီ");
+  }
+
+  // ---------- Settings (category management) ----------
+  let settingsDraft = [];
+  let settingsActiveType = "expense";
+
+  function openSettings(){
+    settingsDraft = categoryList.map(c => ({ ...c }));
+    settingsActiveType = "expense";
+    document.querySelectorAll("#settingsTypeToggle button").forEach(b => {
+      b.classList.toggle("active", b.dataset.type === "expense");
+      b.classList.toggle("expense-active", b.dataset.type === "expense");
+      b.classList.toggle("income-active", false);
+    });
+    renderSettingsCategoryList("expense");
+    $("newCatName").value = "";
+    $("settingsOverlay").classList.add("open");
+  }
+  function closeSettings(){ $("settingsOverlay").classList.remove("open"); }
+
+  function renderSettingsCategoryList(type){
+    settingsActiveType = type;
+    document.querySelectorAll("#settingsTypeToggle button").forEach(b => {
+      const on = b.dataset.type === type;
+      b.classList.toggle("active", on);
+      b.classList.toggle("expense-active", on && type === "expense");
+      b.classList.toggle("income-active", on && type === "income");
+    });
+
+    const list = $("settingsCatList");
+    list.innerHTML = "";
+    const rows = settingsDraft.filter(c => c.type === type);
+
+    if(rows.length === 0){
+      list.innerHTML = '<div style="font-size:12px;color:var(--ink-faint);padding:8px 0;">Category မထားရသေးပါ — အောက်ကနေ ထည့်ပါ။</div>';
+      return;
+    }
+
+    rows.forEach(c => {
+      const row = document.createElement("div");
+      row.className = "cat-row";
+      row.innerHTML = `
+        <input type="color" value="${c.color}" data-id="${c.id}" class="cat-row-color">
+        <input type="text" value="${c.name}" data-id="${c.id}" class="cat-row-name">
+        <button type="button" class="cat-row-del" data-id="${c.id}" title="ဖျက်ရန်">×</button>
+      `;
+      list.appendChild(row);
+    });
+
+    list.querySelectorAll(".cat-row-color").forEach(inp => {
+      inp.addEventListener("input", () => {
+        const c = settingsDraft.find(x => x.id === inp.dataset.id);
+        if(c) c.color = inp.value;
+      });
+    });
+    list.querySelectorAll(".cat-row-name").forEach(inp => {
+      inp.addEventListener("input", () => {
+        const c = settingsDraft.find(x => x.id === inp.dataset.id);
+        if(c) c.name = inp.value;
+      });
+    });
+    list.querySelectorAll(".cat-row-del").forEach(btn => {
+      btn.addEventListener("click", () => {
+        settingsDraft = settingsDraft.filter(x => x.id !== btn.dataset.id);
+        renderSettingsCategoryList(settingsActiveType);
+      });
+    });
+  }
+
+  function addCategoryRow(){
+    const name = $("newCatName").value.trim();
+    const color = $("newCatColor").value || "#8A8F80";
+    if(!name){ showToast("Category name လိုအပ်ပါတယ်"); return; }
+    if(settingsDraft.some(c => c.type === settingsActiveType && c.name === name)){
+      showToast("ဒီ category ရှိပြီးသားပါ");
+      return;
+    }
+    settingsDraft.push({ id: uid(), type: settingsActiveType, name, color });
+    $("newCatName").value = "";
+    renderSettingsCategoryList(settingsActiveType);
+  }
+
+  async function saveSettings(){
+    // Detect renames (matched by id) and propagate them to existing data
+    // so past transactions keep displaying under the new name.
+    const renameMap = {};
+    settingsDraft.forEach(nc => {
+      const old = categoryList.find(o => o.id === nc.id);
+      if(old && old.name !== nc.name && nc.name){ renameMap[old.name] = nc.name; }
+    });
+
+    let txChanged = false, recChanged = false;
+    if(Object.keys(renameMap).length){
+      transactions.forEach(t => { if(renameMap[t.category]){ t.category = renameMap[t.category]; txChanged = true; } });
+      recurring.forEach(r => { if(renameMap[r.category]){ r.category = renameMap[r.category]; recChanged = true; } });
+    }
+
+    categoryList = settingsDraft.filter(c => c.name && c.name.trim()).map(c => ({ ...c }));
+    rebuildCategoryMaps();
+
+    await saveData("categories", sheetType("categories"), categoryList);
+    if(txChanged) await saveTx();
+    if(recChanged) await saveRec();
+
+    closeSettings();
+    populateMonthSelect();
+    render();
+    showToast("Category များ သိမ်းပြီးပါပြီ");
+  }
+
+  async function loadBookData(){
+    await loadCategories();
+    transactions = await loadTx();
+    recurring = await loadRec();
+    const changed = runRecurringEngine();
+    if(changed){ await saveTx(); await saveRec(); }
+    populateMonthSelect();
+    render();
+  }
+
+  // ---------- Wire up ----------
+  function init(){
+    viewMonth = todayISO().slice(0,7);
+    setSyncStatus();
+
+    $("openAdd").addEventListener("click", () => openModal());
+    $("cancelAdd").addEventListener("click", closeModal);
+    $("overlay").addEventListener("click", (e) => { if(e.target.id === "overlay") closeModal(); });
+    $("saveAdd").addEventListener("click", saveTransaction);
+    $("exportCsv").addEventListener("click", exportCsv);
+    $("prevMonth").addEventListener("click", () => shiftMonth(-1));
+    $("nextMonth").addEventListener("click", () => shiftMonth(1));
+    $("monthSelect").addEventListener("change", (e) => { viewMonth = e.target.value; render(); });
+    $("fRecurring").addEventListener("change", (e) => { $("fFreq").disabled = !e.target.checked; });
+    document.querySelectorAll("#typeToggle button").forEach(b => {
+      b.addEventListener("click", () => setType(b.dataset.type));
+    });
+
+    $("openSettings").addEventListener("click", openSettings);
+    $("closeSettings").addEventListener("click", closeSettings);
+    $("settingsOverlay").addEventListener("click", (e) => { if(e.target.id === "settingsOverlay") closeSettings(); });
+    $("saveSettings").addEventListener("click", saveSettings);
+    $("addCatBtn").addEventListener("click", () => addCategoryRow());
+    document.querySelectorAll("#settingsTypeToggle button").forEach(b => {
+      b.addEventListener("click", () => renderSettingsCategoryList(b.dataset.type));
+    });
+
+    loadBookData();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
